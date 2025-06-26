@@ -90,9 +90,12 @@ export default function App() {
     try {
       let imageKey;
       if (image) {
-        const { username } = await getCurrentUser();
+        const { credentials } = await import('aws-amplify');
+        const identityId = credentials().identityId; // Identity used in Storage policy
+
         const extension = image.name.split('.').pop();
-        imageKey = `images/${username}/${Date.now()}.${extension}`;
+        imageKey = `media/${identityId}/${Date.now()}.${extension}`;
+
         await uploadData({
           key: imageKey,
           data: image,
@@ -114,6 +117,7 @@ export default function App() {
       console.error('Error creating note:', err);
     }
   }
+
 
   // Delete a note
   async function deleteNote(note) {
