@@ -9,7 +9,7 @@ const { Amplify, Auth } = AmplifyLib;
 
 import outputs from '../amplify_outputs.json';
 
-import NavigationBar from './components/NavigationBar';
+import NavigationBar from './Components/NavigationBar';
 
 // Configure Amplify
 Amplify.configure(outputs);
