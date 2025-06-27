@@ -4,10 +4,12 @@ import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 
 import { uploadData, getUrl } from 'aws-amplify/storage';
-import { getCurrentUser } from 'aws-amplify/auth';
+import * as AmplifyLib from 'aws-amplify';
+const { Amplify, Auth } = AmplifyLib;
 
-import { Amplify } from 'aws-amplify';
 import outputs from '../amplify_outputs.json';
+
+import NavigationBar from './components/NavigationBar';
 
 // Configure Amplify
 Amplify.configure(outputs);
@@ -16,7 +18,6 @@ Amplify.configure(outputs);
 const client = generateClient();
 
 export default function App() {
-  // State for groups, selected group, notes, forms, image
   const [groups, setGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [groupName, setGroupName] = useState('');
@@ -24,12 +25,10 @@ export default function App() {
   const [noteData, setNoteData] = useState({ name: '', description: '' });
   const [image, setImage] = useState(null);
 
-  // Fetch groups on load
   useEffect(() => {
     fetchGroups();
   }, []);
 
-  // Fetch notes whenever selectedGroupId changes
   useEffect(() => {
     if (selectedGroupId) {
       fetchNotes();
@@ -38,7 +37,6 @@ export default function App() {
     }
   }, [selectedGroupId]);
 
-  // Fetch groups
   async function fetchGroups() {
     try {
       const result = await client.models.Group.list();
@@ -48,13 +46,13 @@ export default function App() {
     }
   }
 
-  // Fetch notes for selected group
   async function fetchNotes() {
     if (!selectedGroupId) return;
     try {
       const result = await client.models.Note.list({
         filter: { groupId: { eq: selectedGroupId } },
       });
+
       const notesWithUrls = await Promise.all(
         result.data.map(async (note) => {
           if (note.image) {
@@ -63,13 +61,13 @@ export default function App() {
           return note;
         })
       );
+
       setNotes(notesWithUrls);
     } catch (err) {
       console.error('Error fetching notes:', err);
     }
   }
 
-  // Create a new group
   async function createGroup(event) {
     event.preventDefault();
     if (!groupName.trim()) return;
@@ -82,7 +80,6 @@ export default function App() {
     }
   }
 
-  // Create a new note in the selected group
   async function createNote(event) {
     event.preventDefault();
     if (!noteData.name.trim() || !noteData.description.trim() || !selectedGroupId) return;
@@ -90,9 +87,8 @@ export default function App() {
     try {
       let imageKey;
       if (image) {
-        const { credentials } = await import('aws-amplify');
-        const identityId = credentials().identityId; // Identity used in Storage policy
-
+        const credentials = await Auth.currentCredentials();
+        const identityId = credentials.identityId;
         const extension = image.name.split('.').pop();
         imageKey = `media/${identityId}/${Date.now()}.${extension}`;
 
@@ -118,8 +114,6 @@ export default function App() {
     }
   }
 
-
-  // Delete a note
   async function deleteNote(note) {
     try {
       await client.models.Note.delete(note.id);
@@ -132,9 +126,15 @@ export default function App() {
   return (
     <Authenticator>
       {({ signOut, user }) => (
-        <main style={{ padding: 20, maxWidth: 600, margin: 'auto' }}>
-          <h1>Hello {user.username}</h1>
-          <button onClick={signOut}>Sign out</button>
+        <main style={{ padding: 20, margin: 'auto' }}>
+          <NavigationBar
+              groups={groups}
+              selectedGroupId={selectedGroupId}
+              setSelectedGroupId={setSelectedGroupId}
+              signOut={signOut}
+              user={user}
+            />
+          <h1>Hello!!!</h1>
 
           <section style={{ marginTop: 20 }}>
             <h2>Create Group</h2>
@@ -149,21 +149,6 @@ export default function App() {
               <button type="submit">Create Group</button>
             </form>
 
-            <label>
-              <strong>Select Group:</strong>
-              <select
-                value={selectedGroupId}
-                onChange={(e) => setSelectedGroupId(e.target.value)}
-                style={{ width: '100%', padding: 8, marginTop: 5 }}
-              >
-                <option value="">-- Select a group --</option>
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-            </label>
           </section>
 
           {selectedGroupId && (

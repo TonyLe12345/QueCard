@@ -3,7 +3,7 @@ import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 const schema = a.schema({
   Group: a.model({
     name: a.string(),
-    notes: a.hasMany('Note', 'groupId'), // <- must match the foreign key field in Note
+    notes: a.hasMany('Note', 'groupId'), 
   })
   .authorization((allow) => [allow.owner()]),
 
@@ -11,8 +11,8 @@ const schema = a.schema({
     name: a.string(),
     description: a.string(),
     image: a.string(),
-    groupId: a.id(), // <- required to define the foreign key
-    group: a.belongsTo('Group', 'groupId'), // <- must match field name above
+    groupId: a.id(), 
+    group: a.belongsTo('Group', 'groupId'), 
   })
   .authorization((allow) => [allow.owner()]),
 });
